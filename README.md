@@ -12,7 +12,7 @@ Make sure the following are installed on your laptop before the conference:
 
 | Requirement | Minimum Version | Check with |
 |-------------|-----------------|------------|
-| **Node.js** | 18.x (LTS recommended: 20.x or 22.x) | `node --version` |
+| **Node.js** | (LTS recommended: 20.x or 22.x) | `node --version` |
 | **npm**     | 9.x or newer | `npm --version` |
 | **Git**     | Any recent version | `git --version` |
 | **VS Code** (or any editor) | Latest | — |
