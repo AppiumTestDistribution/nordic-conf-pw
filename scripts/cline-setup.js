@@ -3,7 +3,9 @@
  * Merges this project's `playwright-test` MCP server into Cline's global
  * `cline_mcp_settings.json`. Idempotent. Preserves other servers the user has.
  *
- * Cline launches MCP servers from VS Code's install dir (not the workspace),
+ * Writes to every detected Cline host (VS Code, Cursor, VSCodium, Code Insiders).
+ *
+ * Cline launches MCP servers from the host's install dir (not the workspace),
  * so we override `command` to point at this project's `scripts/mcp-launcher.cjs`
  * via its absolute path. The launcher `cd`s to the project root before
  * exec'ing the real MCP server, fixing relative-path resolution (the
@@ -20,19 +22,33 @@ const PROJECT_ROOT = resolve(__dirname, '..');
 const PROJECT_MCP_PATH = join(PROJECT_ROOT, '.roo', 'mcp.json');
 const LAUNCHER_PATH = join(PROJECT_ROOT, 'scripts', 'mcp-launcher.cjs');
 
-function clineSettingsPath() {
+const SETTINGS_SEGMENTS = ['User', 'globalStorage', 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json'];
+
+// Hosts that ship the Cline extension. Order matches the parent dir under
+// the per-OS Application Support / config root.
+const HOST_DIRS = ['Code', 'Cursor', 'Code - Insiders', 'VSCodium'];
+
+function hostRoot() {
   const home = homedir();
-  const segments = ['Code', 'User', 'globalStorage', 'saoudrizwan.claude-dev', 'settings', 'cline_mcp_settings.json'];
   switch (platform()) {
     case 'darwin':
-      return join(home, 'Library', 'Application Support', ...segments);
+      return join(home, 'Library', 'Application Support');
     case 'linux':
-      return join(home, '.config', ...segments);
+      return join(home, '.config');
     case 'win32':
-      return join(process.env.APPDATA || join(home, 'AppData', 'Roaming'), ...segments);
+      return process.env.APPDATA || join(home, 'AppData', 'Roaming');
     default:
       throw new Error(`Unsupported platform: ${platform()}`);
   }
+}
+
+function detectedHostConfigs() {
+  const root = hostRoot();
+  return HOST_DIRS
+    .map(host => ({ host, path: join(root, host, ...SETTINGS_SEGMENTS) }))
+    // Include hosts where the host dir exists (extension may be installed
+    // but the config file not yet created — we'll create it).
+    .filter(({ path: p }) => existsSync(dirname(dirname(dirname(p)))));
 }
 
 function readJson(path, fallback) {
@@ -53,36 +69,37 @@ function main() {
     throw new Error(`Launcher script missing: ${LAUNCHER_PATH}`);
   }
 
-  // Start from the project's MCP entry (keeps alwaysAllow + disabledTools),
-  // then override command/args to use the absolute-path launcher so Cline
-  // picks the right cwd.
   const projectServer = { ...projectMcp.mcpServers[SERVER_KEY] };
   delete projectServer.type;
   projectServer.command = 'node';
   projectServer.args = [LAUNCHER_PATH];
 
-  const target = clineSettingsPath();
-  mkdirSync(dirname(target), { recursive: true });
-
-  const existing = readJson(target, { mcpServers: {} });
-  existing.mcpServers ||= {};
-
-  const before = JSON.stringify(existing.mcpServers[SERVER_KEY] ?? null);
-  existing.mcpServers[SERVER_KEY] = projectServer;
-  const after = JSON.stringify(projectServer);
-
-  if (before === after) {
-    console.log(`✓ Cline already has '${SERVER_KEY}' configured identically.`);
-    console.log(`  ${target}`);
-    return;
+  const targets = detectedHostConfigs();
+  if (targets.length === 0) {
+    throw new Error(`No Cline host (VS Code / Cursor / VSCodium / Code Insiders) detected on this machine.`);
   }
 
-  writeFileSync(target, JSON.stringify(existing, null, 2) + '\n');
-  console.log(`✓ Updated Cline global settings:`);
-  console.log(`  ${target}`);
-  console.log(`  → Launcher: ${LAUNCHER_PATH}`);
-  console.log(`\nNext: reload VS Code (Cmd/Ctrl-Shift-P → "Developer: Reload Window").`);
-  console.log(`Then in Cline's MCP panel you should see '${SERVER_KEY}' connected.`);
+  for (const { host, path: target } of targets) {
+    mkdirSync(dirname(target), { recursive: true });
+    const existing = readJson(target, { mcpServers: {} });
+    existing.mcpServers ||= {};
+
+    const before = JSON.stringify(existing.mcpServers[SERVER_KEY] ?? null);
+    existing.mcpServers[SERVER_KEY] = projectServer;
+    const after = JSON.stringify(projectServer);
+
+    if (before === after) {
+      console.log(`✓ [${host}] already configured identically.`);
+    } else {
+      writeFileSync(target, JSON.stringify(existing, null, 2) + '\n');
+      console.log(`✓ [${host}] updated.`);
+    }
+    console.log(`    ${target}`);
+  }
+
+  console.log(`\n→ Launcher: ${LAUNCHER_PATH}`);
+  console.log(`Next: reload the host(s) above (Cmd/Ctrl-Shift-P → "Developer: Reload Window").`);
+  console.log(`If a tool still reports "not found" after reload, open Cline's MCP panel and toggle the tool on individually — UI toggles override disabledTools.`);
 }
 
 try {
