@@ -86,8 +86,6 @@ Then reload VS Code (`Cmd/Ctrl-Shift-P` → "Developer: Reload Window") and Clin
         "browser_localstorage_get", "browser_localstorage_list", "browser_localstorage_set",
         "browser_sessionstorage_clear", "browser_sessionstorage_delete",
         "browser_sessionstorage_get", "browser_sessionstorage_list", "browser_sessionstorage_set",
-        "browser_network_state_set", "browser_network_clear",
-        "browser_route", "browser_route_list", "browser_unroute",
         "browser_start_tracing", "browser_stop_tracing",
         "browser_start_video", "browser_stop_video", "browser_video_chapter",
         "browser_pdf_save", "browser_annotate",
