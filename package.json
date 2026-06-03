@@ -13,8 +13,8 @@
     "report": "playwright show-report",
     "trace": "playwright show-trace",
     "codegen": "playwright codegen https://demo.playwright.dev/todomvc",
-    "skills:sync": "rsync -a --delete .roo/skills/ .clinerules/skills/",
-    "skills:check": "diff -r .roo/skills .clinerules/skills && echo 'skills in sync'",
+    "skills:sync": "node scripts/skills-sync.js",
+    "skills:check": "node scripts/skills-check.js",
     "cline:setup": "node scripts/cline-setup.js"
   },
   "keywords": [
