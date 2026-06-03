@@ -71,6 +71,71 @@ Invoke in Claude Code with natural language, e.g. "Use the planner agent on the 
 
 > The Generator should follow this repo's house style — see the authoring skills below. When you invoke it, make sure those skills are loaded so generated tests match the patterns in `pages/` and `tests/fixtures.ts`.
 
+## `planner_save_plan` — arg schema (must populate every field)
+
+The MCP tool is strict (Zod-validated). Every suite needs `seedFile`, every test needs `file` and `steps`, and every step needs an `expect` array. Omitting any of these returns an `InvalidArgument` / Zod error like *"expected string, received undefined"* at `suites[*].seedFile` / `tests[*].file` / `tests[*].steps`.
+
+Required shape:
+
+```json
+{
+  "name": "Inventory Test Plan",
+  "fileName": "specs/inventory.plan.md",
+  "overview": "Tests for the inventory page covering auth, listing, sort, cart.",
+  "suites": [
+    {
+      "name": "Cart Interactions",
+      "seedFile": "tests/seed.spec.ts",
+      "tests": [
+        {
+          "name": "Add single item to cart",
+          "file": "tests/inventory/add-single-item.spec.ts",
+          "steps": [
+            {
+              "perform": "Click the 'Add to cart' button on the first product",
+              "expect": [
+                "Button label changes to 'Remove'",
+                "Cart badge increments to 1"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
+```
+
+Rules:
+- `seedFile` — always `tests/seed.spec.ts` in this repo (the scaffold from `init-agents`).
+- `file` — full path, fs-friendly kebab-case, ending in `.spec.ts`, e.g. `tests/<suite>/<scenario>.spec.ts`.
+- `steps[*].perform` is optional; `steps[*].expect` is **required** and must be an array of strings (use `[]` if truly nothing to assert, but prefer at least one assertion per step).
+- Do not pass markdown-formatted prose in place of these fields — the tool itself converts the structured payload into markdown.
+
+### ⚠️ Pass `suites` as a real JSON array, NOT a stringified one
+
+When the tool call is constructed, `suites` must be an actual array value in the arguments object — not a string containing JSON. Same for nested `tests` and `steps` arrays.
+
+```jsonc
+// ✅ CORRECT — suites is a real array
+{
+  "name": "...",
+  "fileName": "specs/x.plan.md",
+  "overview": "...",
+  "suites": [ { "name": "...", "seedFile": "...", "tests": [ ... ] } ]
+}
+
+// ❌ WRONG — suites is a string (will fail Zod: "expected array, received string")
+{
+  "name": "...",
+  "fileName": "specs/x.plan.md",
+  "overview": "...",
+  "suites": "[{\"name\":\"...\",\"seedFile\":\"...\",\"tests\":[...]}]"
+}
+```
+
+If you find yourself building the suites array as a string and then assigning it, **stop and emit it as a structured value instead**. The MCP server validates with strict Zod — strings will not be auto-parsed back into arrays.
+
 ## Authoring skills (house style for hand-written + generated code)
 
 - `[[playwright-page-object]]` — when/how to use POM
