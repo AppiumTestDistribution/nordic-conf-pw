@@ -11,7 +11,10 @@
     "test:firefox": "playwright test --project=firefox",
     "test:webkit": "playwright test --project=webkit",
     "report": "playwright show-report",
-    "codegen": "playwright codegen https://demo.playwright.dev/todomvc"
+    "codegen": "playwright codegen https://demo.playwright.dev/todomvc",
+    "skills:sync": "rsync -a --delete .roo/skills/ .clinerules/skills/",
+    "skills:check": "diff -r .roo/skills .clinerules/skills && echo 'skills in sync'",
+    "cline:setup": "node scripts/cline-setup.js"
   },
   "keywords": [
     "playwright",

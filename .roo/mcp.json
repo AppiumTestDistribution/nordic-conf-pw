@@ -1,0 +1,52 @@
+{
+  "mcpServers": {
+    "playwright-test": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["playwright", "run-test-mcp-server"],
+      "alwaysAllow": [
+        "browser_snapshot",
+        "browser_navigate",
+        "planner_setup_page"
+      ],
+      "disabledTools": [
+        "browser_run_code_unsafe",
+        "browser_drag",
+        "browser_drop",
+        "browser_file_upload",
+        "browser_handle_dialog",
+        "browser_take_screenshot",
+        "browser_resize",
+        "browser_close",
+        "browser_console_clear",
+        "browser_mouse_click_xy",
+        "browser_mouse_down",
+        "browser_mouse_up",
+        "browser_mouse_move_xy",
+        "browser_mouse_drag_xy",
+        "browser_mouse_wheel",
+        "browser_keydown",
+        "browser_keyup",
+        "browser_press_sequentially",
+        "browser_cookie_clear",
+        "browser_cookie_delete",
+        "browser_cookie_get",
+        "browser_cookie_list",
+        "browser_cookie_set",
+        "browser_set_storage_state",
+        "browser_storage_state",
+        "browser_network_clear",
+        "browser_route",
+        "browser_route_list",
+        "browser_unroute",
+        "browser_start_video",
+        "browser_stop_video",
+        "browser_video_chapter",
+        "browser_pdf_save",
+        "browser_annotate",
+        "browser_highlight",
+        "browser_hide_highlight"
+      ]
+    }
+  }
+}
