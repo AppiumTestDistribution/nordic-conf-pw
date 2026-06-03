@@ -33,8 +33,6 @@
         "browser_cookie_get",
         "browser_cookie_list",
         "browser_cookie_set",
-        "browser_set_storage_state",
-        "browser_storage_state",
         "browser_network_clear",
         "browser_route",
         "browser_route_list",
